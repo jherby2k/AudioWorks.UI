@@ -1,0 +1,14 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <Revision>$(BUILD_BUILDID)</Revision>
+    <Revision Condition="'$(Revision)'==''">0</Revision>
+    <Product>AudioWorks</Product>
+    <Copyright>© 2019 Jeremy Herbison</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,832 @@
+﻿<!-- Copyright © 2019 Jeremy Herbison
+
+This file is part of AudioWorks.
+
+AudioWorks is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+AudioWorks is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+
+You should have received a copy of the GNU Affero General Public License along with AudioWorks. If not, see
+<https://www.gnu.org/licenses/>. -->
+
+<mahapps:MetroWindow x:Class="AudioWorks.UI.Views.MainWindow"
+                     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                     xmlns:b="http://schemas.microsoft.com/xaml/behaviors" 
+                     xmlns:prism="http://prismlibrary.com/"
+                     xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
+                     xmlns:fluent="urn:fluent-ribbon"
+                     xmlns:views="clr-namespace:AudioWorks.UI.Views"
+                     xmlns:viewModels="clr-namespace:AudioWorks.UI.ViewModels"
+                     xmlns:api="clr-namespace:AudioWorks.Api;assembly=AudioWorks.Api"
+                     mc:Ignorable="d"
+                     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel}"
+                     mahapps:DialogParticipation.Register="{Binding}"
+                     Title="AudioWorks"
+                     Icon="../Resources/Icon.png"
+                     Height="668"
+                     Width="1024"
+                     TitleCharacterCasing="Normal">
+
+    <b:Interaction.Triggers>
+        <b:EventTrigger EventName="Closing">
+            <prism:InvokeCommandAction Command="{Binding ExitCommand}"/>
+        </b:EventTrigger>
+    </b:Interaction.Triggers>
+
+    <mahapps:MetroWindow.Flyouts>
+        <mahapps:FlyoutsControl>
+            <mahapps:FlyoutsControl.Resources>
+                <Style TargetType="TabControl"
+                       x:Key="FlyoutTabControl"
+                       BasedOn="{StaticResource {x:Type TabControl}}">
+                    <Setter Property="SelectedIndex"
+                            Value="0"/>
+                    <Setter Property="VerticalAlignment"
+                            Value="Stretch"/>
+                    <Setter Property="Margin"
+                            Value="0,12,22,0"/>
+                    <Setter Property="Padding"
+                            Value="22,0,0,0"/>
+                    <Setter Property="TabStripPlacement"
+                            Value="Left"/>
+                    <Setter Property="mahapps:TabControlHelper.Underlined"
+                            Value="TabPanel"/>
+                    <Setter Property="mahapps:TabControlHelper.Transition"
+                            Value="Right"/>
+                </Style>
+                <Style TargetType="TabItem"
+                       x:Key="HeaderedTabItem"
+                       BasedOn="{StaticResource {x:Type TabItem}}"
+                       d:DataContext="{d:DesignInstance TabItem}">
+                    <Setter Property="Header"
+                            Value="{Binding DataContext.Title}"/>
+                </Style>
+            </mahapps:FlyoutsControl.Resources>
+            <mahapps:FlyoutsControl.ItemContainerStyle>
+                <Style TargetType="mahapps:Flyout">
+                    <Setter Property="Position"
+                            Value="Right"/>
+                    <Setter Property="AnimateOpacity"
+                            Value="True"/>
+                    <Setter Property="Margin"
+                            Value="0,31,0,23"/>
+                </Style>
+            </mahapps:FlyoutsControl.ItemContainerStyle>
+            <mahapps:Flyout Header="Metadata Settings"
+                            IsOpen="{Binding ShowMetadataSettings}">
+                <TabControl prism:RegionManager.RegionName="MetadataSettings"
+                            Style="{StaticResource FlyoutTabControl}"
+                            ItemContainerStyle="{StaticResource HeaderedTabItem}">
+                </TabControl>
+            </mahapps:Flyout>
+            <mahapps:Flyout Header="Analysis Settings"
+                            IsOpen="{Binding ShowAnalyzerSettings}">
+                <TabControl prism:RegionManager.RegionName="AnalysisSettings"
+                            Style="{StaticResource FlyoutTabControl}"
+                            ItemContainerStyle="{StaticResource HeaderedTabItem}">
+                </TabControl>
+            </mahapps:Flyout>
+            <mahapps:Flyout Header="Encoder Settings"
+                            IsOpen="{Binding ShowEncoderSettings}">
+                <TabControl prism:RegionManager.RegionName="EncoderSettings"
+                            Style="{StaticResource FlyoutTabControl}"
+                            ItemContainerStyle="{StaticResource HeaderedTabItem}"/>
+            </mahapps:Flyout>
+        </mahapps:FlyoutsControl>
+    </mahapps:MetroWindow.Flyouts>
+
+    <DockPanel>
+
+        <fluent:Ribbon DockPanel.Dock="Top"
+                       IsQuickAccessToolBarVisible="False">
+
+            <fluent:Ribbon.Menu>
+                <fluent:ApplicationMenu Header="File">
+                    <fluent:MenuItem Header="Open"
+                                     IsSplited="True"
+                                     Icon="{StaticResource OpenFileDialogImage}">
+                        <fluent:MenuItem Header="File(s)"
+                                         Description="Opens one or more audio files"
+                                         Icon="{StaticResource OpenFileImage}"
+                                         Command="{Binding OpenFilesCommand}"/>
+                        <fluent:MenuItem Header="Directory (recursive)"
+                                         Description="Opens all audio files located within a directory or directory tree"
+                                         Icon="{StaticResource OpenFolderImage}"
+                                         Command="{Binding OpenDirectoryCommand}"/>
+                    </fluent:MenuItem>
+                    <fluent:MenuItem Header="About AudioWorks"
+                                     Icon="{StaticResource StatusInfoTipImage}"
+                                     Width="200"/>
+                    <fluent:MenuItem Header="Exit"
+                                     Icon="{StaticResource ExitImage}"
+                                     Click="ExitMenuItem_OnClick"/>
+                </fluent:ApplicationMenu>
+            </fluent:Ribbon.Menu>
+
+            <fluent:RibbonTabItem Header="Home">
+
+                <fluent:RibbonGroupBox Header="Options" ItemContainerStyle="{StaticResource LargeRibbonButton}">
+                    <fluent:DropDownButton Header="Grouping"
+                                           LargeIcon="{StaticResource GroupClauseImage}"
+                                           fluent:KeyTip.Keys="G">
+                        <fluent:DropDownButton.ItemContainerStyle>
+                            <Style TargetType="fluent:MenuItem">
+                                <Setter Property="IsCheckable"
+                                        Value="True"/>
+                                <Setter Property="IsDefinitive"
+                                        Value="True"/>
+                            </Style>
+                        </fluent:DropDownButton.ItemContainerStyle>
+                        <fluent:MenuItem Header="None"
+                                         IsChecked="{Binding GroupingDisabled}"/>
+                        <fluent:MenuItem Header="By Directory"
+                                         IsChecked="{Binding GroupByDirectory}"/>
+                        <fluent:MenuItem Header="By Album"
+                                         IsChecked="{Binding GroupByAlbum}"/>
+                    </fluent:DropDownButton>
+                    <fluent:DropDownButton Header="Show/Hide Columns"
+                                           LargeIcon="{StaticResource AddRemoveColumnsImage}"
+                                           fluent:KeyTip.Keys="C">
+                        <fluent:DropDownButton.ItemContainerStyle>
+                            <Style TargetType="fluent:MenuItem">
+                                <Setter Property="IsCheckable"
+                                        Value="True"/>
+                                <Setter Property="IsDefinitive"
+                                        Value="False"/>
+                            </Style>
+                        </fluent:DropDownButton.ItemContainerStyle>
+                        <fluent:MenuItem Header="Modified"
+                                         IsChecked="{Binding ShowModified}"/>
+                        <fluent:GroupSeparatorMenuItem/>
+                        <fluent:MenuItem Header="File Name"
+                                         IsChecked="{Binding ShowFileName}"/>
+                        <fluent:MenuItem Header="Path"
+                                         IsChecked="{Binding ShowPath}"/>
+                        <fluent:GroupSeparatorMenuItem/>
+                        <fluent:MenuItem Header="Album"
+                                         IsChecked="{Binding ShowAlbum}"/>
+                        <fluent:MenuItem Header="Album Artist"
+                                         IsChecked="{Binding ShowAlbumArtist}"/>
+                        <fluent:MenuItem Header="Artist"
+                                         IsChecked="{Binding ShowArtist}"/>
+                        <fluent:MenuItem Header="Comment"
+                                         IsChecked="{Binding ShowComment}"/>
+                        <fluent:MenuItem Header="Composer"
+                                         IsChecked="{Binding ShowComposer}"/>
+                        <fluent:MenuItem Header="Cover Art"
+                                         IsChecked="{Binding ShowCoverArt}"/>
+                        <fluent:MenuItem Header="Day"
+                                         IsChecked="{Binding ShowDay}"/>
+                        <fluent:MenuItem Header="Genre"
+                                         IsChecked="{Binding ShowGenre}"/>
+                        <fluent:MenuItem Header="Month"
+                                         IsChecked="{Binding ShowMonth}"/>
+                        <fluent:MenuItem Header="Title"
+                                         IsChecked="{Binding ShowTitle}"/>
+                        <fluent:MenuItem Header="Track #"
+                                         IsChecked="{Binding ShowTrackNumber}"/>
+                        <fluent:MenuItem Header="Track Count"
+                                         IsChecked="{Binding ShowTrackCount}"/>
+                        <fluent:MenuItem Header="Year"
+                                         IsChecked="{Binding ShowYear}"/>
+                        <fluent:GroupSeparatorMenuItem/>
+                        <fluent:MenuItem Header="Album Gain"
+                                         IsChecked="{Binding ShowAlbumGain}"/>
+                        <fluent:MenuItem Header="Album Peak"
+                                         IsChecked="{Binding ShowAlbumPeak}"/>
+                        <fluent:MenuItem Header="Track Gain"
+                                         IsChecked="{Binding ShowTrackGain}"/>
+                        <fluent:MenuItem Header="Track Peak"
+                                         IsChecked="{Binding ShowTrackPeak}"/>
+                        <fluent:GroupSeparatorMenuItem/>
+                        <fluent:MenuItem Header="Bit Rate"
+                                         IsChecked="{Binding ShowBitRate}"/>
+                        <fluent:MenuItem Header="Bits Per Sample"
+                                         IsChecked="{Binding ShowBitsPerSample}"/>
+                        <fluent:MenuItem Header="Channels"
+                                         IsChecked="{Binding ShowChannels}"/>
+                        <fluent:MenuItem Header="Format"
+                                         IsChecked="{Binding ShowFormat}"/>
+                        <fluent:MenuItem Header="Frame Count"
+                                         IsChecked="{Binding ShowFrameCount}"/>
+                        <fluent:MenuItem Header="Play Length"
+                                         IsChecked="{Binding ShowPlayLength}"/>
+                        <fluent:MenuItem Header="Sample Rate"
+                                         IsChecked="{Binding ShowSampleRate}"/>
+                    </fluent:DropDownButton>
+                </fluent:RibbonGroupBox>
+
+                <fluent:RibbonGroupBox Header="Metadata" ItemContainerStyle="{StaticResource LargeRibbonButton}">
+                    <fluent:Button Header="Edit"
+                                   Command="{Binding EditSelectionCommand}"
+                                   LargeIcon="{StaticResource EditTagImage}"
+                                   fluent:KeyTip.Keys="ED"/>
+                    <fluent:Button Header="Save All"
+                                   Command="{Binding SaveAllCommand}"
+                                   LargeIcon="{StaticResource SaveAllImage}"
+                                   fluent:KeyTip.Keys="A"/>
+                    <fluent:Button Header="Save Changes"
+                                   Command="{Binding SaveModifiedCommand}"
+                                   LargeIcon="{StaticResource SaveTableImage}"
+                                   fluent:KeyTip.Keys="S"/>
+                    <fluent:Button Header="Revert Changes"
+                                   Command="{Binding RevertModifiedCommand}"
+                                   LargeIcon="{StaticResource UndoImage}"
+                                   fluent:KeyTip.Keys="R"/>
+                    <fluent:ToggleButton Header="Settings"
+                                         IsChecked="{Binding ShowMetadataSettings}"
+                                         LargeIcon="{StaticResource SettingsImage}"/>
+                </fluent:RibbonGroupBox>
+
+                <fluent:RibbonGroupBox Header="Analysis" ItemContainerStyle="{StaticResource LargeRibbonButton}">
+                    <fluent:DropDownButton Header="Analyze All"
+                                           LargeIcon="{StaticResource AnalyzeTraceImage}"
+                                           ItemsSource="{Binding Analyzers}"
+                                           fluent:KeyTip.Keys="N">
+                        <fluent:DropDownButton.ItemContainerStyle>
+                            <Style TargetType="MenuItem"
+                                   d:DataContext="{d:DesignInstance api:AudioAnalyzerInfo}">
+                                <Setter Property="Header"
+                                        Value="{Binding Name}"/>
+                                <Setter Property="Command"
+                                        Value="{Binding DataContext.AnalyzeAllCommand, RelativeSource={RelativeSource AncestorType={x:Type fluent:DropDownButton}}}"/>
+                                <Setter Property="CommandParameter"
+                                        Value="{Binding Name}"/>
+                            </Style>
+                        </fluent:DropDownButton.ItemContainerStyle>
+                    </fluent:DropDownButton>
+                    <fluent:ToggleButton Header="Settings"
+                                         IsChecked="{Binding ShowAnalyzerSettings}"
+                                         LargeIcon="{StaticResource SettingsImage}"/>
+                </fluent:RibbonGroupBox>
+
+                <fluent:RibbonGroupBox Header="Encoding" ItemContainerStyle="{StaticResource LargeRibbonButton}">
+                    <fluent:Button Header="Encode All"
+                                   LargeIcon="{StaticResource OutputImage}"
+                                   Command="{Binding EncodeAllCommand}"
+                                   fluent:KeyTip.Keys="EN"/>
+                    <fluent:ToggleButton Header="Settings"
+                                         IsChecked="{Binding ShowEncoderSettings}"
+                                         LargeIcon="{StaticResource SettingsImage}"/>
+                </fluent:RibbonGroupBox>
+            </fluent:RibbonTabItem>
+        </fluent:Ribbon>
+
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusText}"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <DataGrid ItemsSource="{Binding AudioFiles}"
+                  AutoGenerateColumns="False"
+                  PreviewMouseRightButtonUp="DataGrid_OnPreviewMouseRightButtonUp"
+                  GridLinesVisibility="Vertical"
+                  AllowDrop="True"
+                  IsReadOnly="{Binding IsBusy}"
+                  PreviewDragOver="DataGrid_OnPreviewDragOver">
+
+            <DataGrid.Resources>
+                <viewModels:MainWindowViewModelBindingProxy x:Key="Proxy" Data="{Binding}"/>
+                <BooleanToVisibilityConverter x:Key="VisibilityConverter"/>
+                <views:BitRateConverter x:Key="BitRateConverter"/>
+                <Style TargetType="TextBox"
+                       x:Key="EntryTextBox"
+                       BasedOn="{StaticResource {x:Type TextBox}}">
+                    <Setter Property="mahapps:TextBoxHelper.SelectAllOnFocus"
+                            Value="True"/>
+                </Style>
+                <Style TargetType="TextBlock"
+                       x:Key="NumericTextBlock"
+                       BasedOn="{StaticResource {x:Type TextBlock}}">
+                    <Setter Property="TextAlignment"
+                            Value="Right"/>
+                </Style>
+            </DataGrid.Resources>
+
+            <b:Interaction.Triggers>
+                <b:EventTrigger EventName="SelectionChanged">
+                    <b:InvokeCommandAction Command="{Binding SelectionChangedCommand}"
+                                           CommandParameter="{Binding SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
+                </b:EventTrigger>
+                <b:EventTrigger EventName="PreviewKeyDown">
+                    <prism:InvokeCommandAction Command="{Binding KeyDownCommand}"/>
+                </b:EventTrigger>
+                <b:EventTrigger EventName="PreviewDrop">
+                    <prism:InvokeCommandAction Command="{Binding DropCommand}"/>
+                </b:EventTrigger>
+            </b:Interaction.Triggers>
+
+            <DataGrid.InputBindings>
+                <MouseBinding MouseAction="LeftDoubleClick"
+                              Command="{Binding EditSelectionCommand}"/>
+            </DataGrid.InputBindings>
+
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Edit..."
+                              Command="{Binding EditSelectionCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="Revert"
+                              Command="{Binding RevertSelectionCommand}"/>
+                    <MenuItem Header="Save"
+                              Command="{Binding SaveSelectionCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="Remove"
+                              Command="{Binding RemoveSelectionCommand}"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+
+            <DataGrid.Style>
+                <Style TargetType="{x:Type DataGrid}"
+                       BasedOn="{StaticResource MahApps.Styles.DataGrid}">
+                    <Setter Property="AlternatingRowBackground"
+                            Value="{DynamicResource GrayBrush10}"/>
+                </Style>
+            </DataGrid.Style>
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader"
+                       BasedOn="{StaticResource MahApps.Styles.DataGridColumnHeader}">
+                    <Setter Property="FontWeight"
+                            Value="Normal"/>
+                    <Setter Property="mahapps:ControlsHelper.ContentCharacterCasing"
+                            Value="Normal"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="{x:Type GroupItem}">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type GroupItem}"
+                                                     d:DataContext="{d:DesignInstance GroupItem}">
+                                        <Expander IsExpanded="True">
+                                            <Expander.Header>
+                                                <TextBlock Text="{Binding Name}"/>
+                                            </Expander.Header>
+                                            <Expander.Content>
+                                                <ItemsPresenter/>
+                                            </Expander.Content>
+                                        </Expander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow"
+                       BasedOn="{StaticResource MahApps.Styles.DataGridRow}"
+                       d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Metadata.Modified}"
+                                     Value="True">
+                            <Setter Property="FontWeight"
+                                    Value="Bold"/>
+                            <Setter Property="FontStyle"
+                                    Value="Italic"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Metadata.Modified}"
+                                     Value="False">
+                            <Setter Property="FontWeight"
+                                    Value="Normal"/>
+                            <Setter Property="FontStyle"
+                                    Value="Normal"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="Modified" 
+                                    Binding="{Binding Metadata.Modified, Mode=OneWay}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowModified, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+                <DataGridTextColumn Header="Path" 
+                                    Binding="{Binding Path, Mode=OneTime}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowPath, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+                <DataGridTextColumn Header="File Name"
+                                    Binding="{Binding FileName, Mode=OneTime}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowFileName, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+                <mahapps:DataGridNumericUpDownColumn Header="Track #"
+                                                     Binding="{Binding Metadata.TrackNumber}"
+                                                     Minimum="1"
+                                                     Maximum="99"
+                                                     StringFormat="00"
+                                                     Visibility="{Binding Data.ShowTrackNumber, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                                     d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.TrackNumberIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.TrackNumberIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </mahapps:DataGridNumericUpDownColumn>
+                <mahapps:DataGridNumericUpDownColumn Header="Track Count"
+                                                     Binding="{Binding Metadata.TrackCount}"
+                                                     Minimum="1"
+                                                     Maximum="99"
+                                                     StringFormat="00"
+                                                     Visibility="{Binding Data.ShowTrackCount, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                                     d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.TrackCountIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.TrackCountIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </mahapps:DataGridNumericUpDownColumn>
+                <DataGridTextColumn Header="Title"
+                                    Binding="{Binding Metadata.SongTitle, UpdateSourceTrigger=PropertyChanged}"
+                                    EditingElementStyle="{StaticResource EntryTextBox}"
+                                    Visibility="{Binding Data.ShowTitle, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.SongTitleIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.SongTitleIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Artist"
+                                    Binding="{Binding Metadata.Artist, UpdateSourceTrigger=PropertyChanged}"
+                                    EditingElementStyle="{StaticResource EntryTextBox}"
+                                    Visibility="{Binding Data.ShowArtist, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.ArtistIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.ArtistIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Album Artist"
+                                    Binding="{Binding Metadata.AlbumArtist, UpdateSourceTrigger=PropertyChanged}"
+                                    EditingElementStyle="{StaticResource EntryTextBox}"
+                                    Visibility="{Binding Data.ShowAlbumArtist, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.AlbumArtistIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.AlbumArtistIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Composer"
+                                    Binding="{Binding Metadata.Composer, UpdateSourceTrigger=PropertyChanged}"
+                                    EditingElementStyle="{StaticResource EntryTextBox}"
+                                    Visibility="{Binding Data.ShowComposer, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.ComposerIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.ComposerIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Album"
+                                    Binding="{Binding Metadata.Album, UpdateSourceTrigger=PropertyChanged}"
+                                    EditingElementStyle="{StaticResource EntryTextBox}"
+                                    Visibility="{Binding Data.ShowAlbum, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.AlbumIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.AlbumIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <mahapps:DataGridNumericUpDownColumn Header="Day"
+                                                     Binding="{Binding Metadata.Day, UpdateSourceTrigger=PropertyChanged}"
+                                                     Minimum="1"
+                                                     Maximum="99"
+                                                     StringFormat="00"
+                                                     Visibility="{Binding Data.ShowDay, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                                     d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.DayIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.DayIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </mahapps:DataGridNumericUpDownColumn>
+                <mahapps:DataGridNumericUpDownColumn Header="Month"
+                                                     Binding="{Binding Metadata.Month, UpdateSourceTrigger=PropertyChanged}"
+                                                     Minimum="1"
+                                                     Maximum="99"
+                                                     StringFormat="00"
+                                                     Visibility="{Binding Data.ShowMonth, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                                     d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.MonthIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.MonthIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </mahapps:DataGridNumericUpDownColumn>
+                <mahapps:DataGridNumericUpDownColumn Header="Year"
+                                                     Binding="{Binding Metadata.Year, UpdateSourceTrigger=PropertyChanged}"
+                                                     Minimum="1000"
+                                                     Maximum="9999"
+                                                     Visibility="{Binding Data.ShowYear, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                                     d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.YearIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.YearIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </mahapps:DataGridNumericUpDownColumn>
+                <DataGridTemplateColumn Header="Cover Art"
+                                        Visibility="{Binding Data.ShowCoverArt, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                        d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Metadata.CoverImage, Mode=OneTime}"
+                                   Height="18"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Genre"
+                                    Binding="{Binding Metadata.Genre, UpdateSourceTrigger=PropertyChanged}"
+                                    EditingElementStyle="{StaticResource EntryTextBox}"
+                                    Visibility="{Binding Data.ShowGenre, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.GenreIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.GenreIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Comment"
+                                    Binding="{Binding Metadata.Comment, UpdateSourceTrigger=PropertyChanged}"
+                                    EditingElementStyle="{StaticResource EntryTextBox}"
+                                    Visibility="{Binding Data.ShowComment, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.CommentIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.CommentIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Track Gain"
+                                    Binding="{Binding Metadata.TrackGain, Mode=OneWay, StringFormat={}{0} dB}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowTrackGain, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.TrackGainIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.TrackGainIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Track Peak"
+                                    Binding="{Binding Metadata.TrackPeak, Mode=OneWay}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowTrackPeak, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.TrackPeakIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.TrackPeakIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Album Gain"
+                                    Binding="{Binding Metadata.AlbumGain, Mode=OneWay, StringFormat={}{0} dB}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowAlbumGain, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.AlbumGainIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.AlbumGainIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Album Peak"
+                                    Binding="{Binding Metadata.AlbumPeak, Mode=OneWay}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowAlbumPeak, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}">
+                    <DataGridColumn.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Metadata.AlbumPeakIsModified}"
+                                             Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Highlight}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Metadata.AlbumPeakIsModified}"
+                                             Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MahApps.Brushes.Text}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Format"
+                                    Binding="{Binding Info.Format, Mode=OneTime}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowFormat, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+                <DataGridTextColumn Header="Play Length"
+                                    Binding="{Binding Info.PlayLength, Mode=OneTime}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowPlayLength, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+                <DataGridTextColumn Header="Bit Rate"
+                                    Binding="{Binding Info.BitRate, Mode=OneTime, Converter={StaticResource BitRateConverter}}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowBitRate, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+                <DataGridTextColumn Header="Sample Rate"
+                                    Binding="{Binding Info.SampleRate, Mode=OneTime, StringFormat={}{0} Hz}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowSampleRate, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+                <DataGridTextColumn Header="Bits Per Sample"
+                                    Binding="{Binding Info.BitsPerSample, Mode=OneTime}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowBitsPerSample, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+                <DataGridTextColumn Header="Channels"
+                                    Binding="{Binding Info.Channels, Mode=OneTime}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowChannels, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+                <DataGridTextColumn Header="Frame Count"
+                                    Binding="{Binding Info.FrameCount, Mode=OneTime}"
+                                    ElementStyle="{StaticResource NumericTextBlock}"
+                                    IsReadOnly="True"
+                                    Visibility="{Binding Data.ShowFrameCount, Source={StaticResource Proxy}, Converter={StaticResource VisibilityConverter}, Mode=OneWay}"
+                                    d:DataContext="{d:DesignInstance viewModels:AudioFileViewModel}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+    </DockPanel>
+</mahapps:MetroWindow>

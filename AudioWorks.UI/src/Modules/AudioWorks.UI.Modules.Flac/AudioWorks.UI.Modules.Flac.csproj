@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <FileVersion>$(Version).$(Revision)</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AudioWorks.UI\AudioWorks.UI.csproj" />
+  </ItemGroup>
+  
+  <PropertyGroup>
+    <PostBuildEvent>xcopy "$(TargetDir)AudioWorks.UI.Modules.Flac.*" "$(SolutionDir)src\AudioWorks.UI\bin\$(Configuration)\$(TargetFramework)\Modules\" /Y</PostBuildEvent>
+  </PropertyGroup>
+
+</Project>
